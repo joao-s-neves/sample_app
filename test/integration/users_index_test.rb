@@ -29,4 +29,26 @@ class UsersIndexTest < ActionDispatch::IntegrationTest
     get users_path
     assert_select 'a', text: 'delete', count: 0
   end
+  
+  test "only show activated users in index" do
+    log_in_as @non_admin
+    @user = users(:lana)
+    get users_path
+    assert_match @user.name, response.body
+    @user.toggle!(:activated)
+    get users_path
+    assert_no_match @user.name, response.body
+    @user.toggle!(:activated)
+  end
+  
+  test "should redirect show when user not activated" do
+    log_in_as(@admin)
+    user = @non_admin
+    get user_path(user)
+    assert_template 'users/show'
+    user.toggle!(:activated)
+    get user_path(user)
+    assert_redirected_to root_url
+    user.toggle!(:activated)
+  end
 end
